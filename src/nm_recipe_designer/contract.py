@@ -20,6 +20,7 @@ SUPPORTED_SAMPLERS = {
     "timedelta",
     "uuid",
     "person",
+    "person_from_faker",
 }
 
 VALIDATOR_CODE_LANGS = {
