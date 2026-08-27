@@ -1,0 +1,79 @@
+{
+  "recipe": {
+    "model_providers": [
+      {
+        "name": "openai-compatible",
+        "endpoint": "",
+        "provider_type": "openai",
+        "extra_headers": {},
+        "extra_body": {}
+      }
+    ],
+    "mcp_providers": [],
+    "model_configs": [
+      {
+        "alias": "generator",
+        "model": "",
+        "provider": "openai-compatible",
+        "inference_parameters": {"temperature": 0.7}
+      }
+    ],
+    "tool_configs": [],
+    "columns": [
+      {
+        "column_type": "sampler",
+        "name": "failure_mode",
+        "drop": true,
+        "sampler_type": "category",
+        "params": {
+          "values": ["async race", "shared state", "timing", "external dependency", "ordering"]
+        }
+      },
+      {
+        "column_type": "sampler",
+        "name": "test_style",
+        "drop": true,
+        "sampler_type": "category",
+        "params": {"values": ["xUnit unit test", "ASP.NET integration test", "database integration test"]}
+      },
+      {
+        "column_type": "llm-text",
+        "name": "instruction",
+        "drop": false,
+        "model_alias": "generator",
+        "prompt": "Create a realistic C#/.NET flaky-test repair task. Failure mode: {{ failure_mode }}. Test style: {{ test_style }}. Include enough code/context to diagnose it. Return only the task.",
+        "with_trace": "none",
+        "extract_reasoning_content": false
+      },
+      {
+        "column_type": "llm-code",
+        "name": "response",
+        "drop": false,
+        "model_alias": "generator",
+        "prompt": "Solve this .NET testing task correctly. Return the corrected C# code only. Task: {{ instruction }}",
+        "with_trace": "none",
+        "extract_reasoning_content": false,
+        "code_lang": "csharp"
+      },
+      {
+        "column_type": "llm-judge",
+        "name": "quality",
+        "drop": false,
+        "model_alias": "generator",
+        "prompt": "Judge whether the proposed C# fix actually addresses the flaky-test root cause. Task: {{ instruction }} Candidate: {{ response }}",
+        "with_trace": "none",
+        "extract_reasoning_content": false,
+        "scores": [
+          {
+            "name": "correctness",
+            "description": "Fix is technically correct and addresses the root cause",
+            "options": {"0": "wrong", "1": "partial", "2": "correct", "3": "excellent"}
+          }
+        ]
+      }
+    ],
+    "processors": []
+  },
+  "run": {"rows": 100, "preview": false, "output_formats": ["jsonl"]},
+  "ui": {"nodes": [], "edges": [], "layout_direction": "LR"}
+}
